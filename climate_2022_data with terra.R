@@ -18,104 +18,121 @@
 
 
 
-install.packages("terra")
+#install.packages("terra")
 
 library(terra)
-#library(raster)
+library(raster)
+library(sp)
 library(ggplot2)
+library(rgdal)
+library(dplyr)
+library(rasterVis)
 
+########################                      using Terra package                       ########################################
+# load a climate and study area raster using Terra
 
-#lets load a climate raster
-
-DOH_2013_name <-"V:/Marlborough regional/climate/wetransfer_AS/Climate_tiff/Dateof200g20122013cor_SB_1.csv_B_gissmall_Ad.tif"
-DOH_2013 <- rast(DOH_2013_name)
-
-DOH_2013
-crs(DOH_2013)
-
-
-#lets load a study raster (Rob created)
+#load a study raster (Rob created) # this is not what Rob created I have saved his grid with EPSG:2193 projection
 study_vineyards <- rast("V:/Marlborough regional/Boundary_files/marlb1_reprojected.tif")
 study_vineyards
 
 
+#Climate grids
+list.files("V:/Marlborough regional/climate/wetransfer_AS/Climate_tiff/")
+#rainfall
+list.files("V:/Marlborough regional/climate/wetransfer_AS/Rainfall_tiff/")
+
+#### rainfall files
+list_rain_files <- list.files("V:/Marlborough regional/climate/wetransfer_AS/Rainfall_tiff/",
+                             pattern = "rain")
+list_rain_files
+
+
+
+#### GST files
+list_GST_files <- list.files("V:/Marlborough regional/climate/wetransfer_AS/Climate_tiff/",
+                             pattern = "GST_Adel")
+list_GST_files 
+
+
+
+#### GDD files
+list_GDD_files <- list.files("V:/Marlborough regional/climate/wetransfer_AS/Climate_tiff/",
+                             pattern = "GDD10")
+list_GDD_files 
+
+
+#### veraison files
+list_DOV_files <- list.files("V:/Marlborough regional/climate/wetransfer_AS/Climate_tiff/",
+                             pattern = "Dateofveraison")
+list_DOV_files 
+
+#### flowering files
+list_DOF_files <- list.files("V:/Marlborough regional/climate/wetransfer_AS/Climate_tiff/",
+                             pattern = "DateofFlowering")
+list_DOF_files         
+
+#### harvest files
+list_DOH_files <- list.files("V:/Marlborough regional/climate/wetransfer_AS/Climate_tiff/",
+            pattern = "Dateof200g")
+list_DOH_files
+
+
+
+list_files <- list_rain_files
+list_files
+########################################################################################################################
+climate_metric <- "rain"
+climate_metric
+#string_extract <- "rain"
+
+#start loop#
+for (list_files in list_files){
+
+#name_file_to_read <- paste0("V:/Marlborough regional/climate/wetransfer_AS/Climate_tiff/", list_files)
+name_file_to_read <- paste0("V:/Marlborough regional/climate/wetransfer_AS/Rainfall_tiff/", list_files)
+
+climate_raster <- rast(name_file_to_read)
+
+#climate_raster
+# get the year from the file name Dateof200g20122013cor_SB_1.csv_B_gissmall_Ad
+
+step1<-sub("cor.csv_B_Ad.tif*", "", list_files) # Extract characters before pattern
+step1
+year<-sub(".*rain", "", step1)                 # Extract characters after pattern
+year
+rm(step1)
 
 ## Project the data esure the climate data and the study area have the same EPSG 2193
 
 #This should work
-test <- terra::project(DOH_2013, y="epsg:2193", align= study_vineyards)
-plot(test)
+climate_raster_projected <- terra::project(x = climate_raster, 
+                       y="epsg:2193", 
+                       align= study_vineyards)
+
+# change the resolution
+climate_raster_projected_resample <- terra::resample(climate_raster_projected, 
+                                  study_vineyards)
+
+climate_raster_projected_resample
 
 
-terra::crs(DOH_2013)  <-"epsg: 2193"
-terra::crs(study_vineyards) <- "epsg: 2193"
+### mask
 
-study_vineyards
-DOH_2013
-
-
-#1, deal with the resolution
-
-terra::res(DOH_2013)
-terra::res(study_vineyards)
-crs(study_vineyards)
+climate_raster_projected_resample_mask <- terra::mask(climate_raster_projected_resample,study_vineyards )
+plot(climate_raster_projected_resample_mask)
 
 
-test <- terra::resample(DOH_2013, study_vineyards)
-test
-
-
-
-
-
-
-
-
-#??test_resolution_DOH_2013 <- projectRaster(DOH_2013,
-                                       #  crs = crs(study_vineyards),
-                                       # res = res(study_vineyards)) 
+terra::writeRaster(climate_raster_projected_resample_mask, 
+                   paste0("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/",
+                          climate_metric,
+                          "_proj_resample_mask_",
+                          year,
+                          ".tiff"),
+                   overwrite=TRUE)
+rm(climate_raster,climate_raster_projected, climate_raster_projected_resample, climate_raster_projected_resample_mask, year)
+}               
 
 
 
+### job for later work out how to plot using ggplot SpatRaster
 
-ggplot() +
-  geom_raster(data = DOH_2013 , 
-              aes(x = x, y = y, 
-                  fill = DOH_2013)) + 
-  geom_raster(data = study_vineyards, 
-              aes(x = x, y = y, 
-                  alpha = study_vineyards)) +
-  scale_fill_gradientn(name = "Elevation", colors = terrain.colors(10)) + 
-  coord_quickmap()
-
-
-
-
-### Now 'resample' so that the climate data has same resolution as the study_vineyards
-#https://rspatial.org/terra/pkg/5-methods.html
-#aggregate and disagg allow for changing the resolution (cell size) of a SpatRaster object. 
-#In the case of aggregate, you need to specify a function determining what to do with the grouped cell values (e.g. mean). 
-#It is possible to specify different (dis)aggregation factors in the x and y direction. 
-#aggregate and disagg are the best methods when adjusting cells size only, 
-#with an integer step (e.g. each side 2 times smaller or larger), 
-#but in some cases that is not possible.
-
-## the climate raster has cell size 0.002417778, 0.001822037
-## while the study vineyards has cell size 100, 100
-
-plot(DOH_2013)
-ra <- aggregate(DOH_2013, 2, fun = "mean")
-
-ra
-plot(ra)
-
-### Crop the spatial extent
-test_crop <- terra::crop(DOH_2013, study_vineyards, mask=TRUE)
-
-### doing what rob wants grid * climate
-study_times_climate <- study_vineyards * DOH_2013
-
-
-
-
-#NOW I want
