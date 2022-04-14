@@ -209,19 +209,18 @@ climate_all %>%
 #### Clusering
 library(cluster)
 ##make a dataset we can work with
-str(rain_all_coords_sub_regions)
-cluser_input <- rain_all_coords_sub_regions %>% 
+str(climate_all_wider)
+cluser_input <- climate_all_wider %>% 
   select(`2013`:`2021`  )
 kmean_2 <- kmeans(cluser_input, centers = 2)
 
-rain_all_coords_sub_regions_temp <- rain_all_coords_sub_regions %>% 
+climate_all_wider <- climate_all_wider %>% 
   mutate(K_Cluster_2 = kmean_2$cluster)
-names(rain_all_coords_sub_regions_temp)
+names(climate_all_wider)
 
-rain_all_coords_sub_regions_temp %>% 
+climate_all_wider %>% 
   ggplot(aes(x = X , y = Y, colour = factor(K_Cluster_2)))+
-  geom_point()+
-  facet_wrap(.~Region_Nam)
+  geom_point()
 
 ## elbow plot
 library(purrr)
@@ -243,19 +242,32 @@ ggplot(elbow_df, aes(x = k, y = tot_withinss)) +
   geom_line() +
   scale_x_continuous(breaks = 1:10)
 
-###  silhouette width taking ages?? something wrong
-sil_width <- map_dbl(2:10,function(k){
-  model <- pam(x = cluser_input, k = k)  
+###  silhouette width taking ages - it does!
+
+# pam_K2 <- cluster::pam(cluser_input, k=3)
+# pam_K2$silinfo$avg.width
+
+sil_width <- map_dbl(2:5,function(k){
+  model <- cluster::pam(x = cluser_input, k = k)  
   model$silinfo$avg.width})
 
 sil_df <- data.frame(
-  k =2:10,  
+  k =2:5,  
   sil_width = sil_width)
 
 sil_df
 
-# Plot the silhouette width
+# Plot the silhouette width Note higher sil width indicated better fit of model
 ggplot(sil_df, aes(x = k, y = sil_width)) +
   geom_line() +
-  scale_x_continuous(breaks = 1:10)
+  scale_x_continuous(breaks = 1:5)
 
+## This will tell me how may clusters are best 
+## Then run this K.cluster and plot
+
+## check how many clusters
+kmean_2$cluster
+# Cluster means
+kmean_2$centers
+# Cluster size
+kmean_2$size
