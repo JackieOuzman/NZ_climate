@@ -15,101 +15,116 @@ library(tidyverse)
 
 ###############################################################################################
 ###  Bring in the points for every cell in raster with also with the subregions attached
+
+
 grid_pts <- terra::vect("V:/Marlborough regional/Boundary_files/temp/Grid_pts_sub_regions.shp")
 plot(grid_pts)
-
-list.files("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/",
-           pattern = "rain")
-
-rain_2013 <- rast("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/rain_proj_resample_mask_20122013.tiff")
-rain_2014 <- rast("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/rain_proj_resample_mask_20132014.tiff")
-rain_2015 <- rast("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/rain_proj_resample_mask_20142015.tiff")
-rain_2016 <- rast("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/rain_proj_resample_mask_20152016.tiff")
-rain_2017 <- rast("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/rain_proj_resample_mask_20162017.tiff")
-rain_2018 <- rast("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/rain_proj_resample_mask_20172018.tiff")
-rain_2019 <- rast("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/rain_proj_resample_mask_20182019.tiff")
-rain_2020 <- rast("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/rain_proj_resample_mask_20192020.tiff")
-rain_2021 <- rast("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/rain_proj_resample_mask_20202021.tiff")
-
-rain_2013 <- terra::extract(x = rain_2013,
-                            y = grid_pts,
-                            xy=TRUE)
-rain_2014 <- terra::extract(x = rain_2014,
-                               y = grid_pts,
-                               xy=TRUE)
-rain_2015 <- terra::extract(x = rain_2015,
-                            y = grid_pts,
-                            xy=TRUE)
-rain_2016 <- terra::extract(x = rain_2016,
-                            y = grid_pts,
-                            xy=TRUE)
-rain_2017 <- terra::extract(x = rain_2017,
-                            y = grid_pts,
-                            xy=TRUE)
-rain_2018 <- terra::extract(x = rain_2018,
-                            y = grid_pts,
-                            xy=TRUE)
-rain_2019 <- terra::extract(x = rain_2019,
-                            y = grid_pts,
-                            xy=TRUE)
-rain_2020 <- terra::extract(x = rain_2020,
-                            y = grid_pts,
-                            xy=TRUE)
-rain_2021 <- terra::extract(x = rain_2021,
-                            y = grid_pts,
-                            xy=TRUE)
-
-
-rain_all <- left_join(rain_2013, rain_2014)
-rain_all <- left_join(rain_all, rain_2015)
-rain_all <- left_join(rain_all, rain_2016)
-rain_all <- left_join(rain_all, rain_2017)
-rain_all <- left_join(rain_all, rain_2018)
-rain_all <- left_join(rain_all, rain_2019)
-rain_all <- left_join(rain_all, rain_2020)
-rain_all <- left_join(rain_all, rain_2021)
-
- 
-names(rain_all)
-rain_all <- rain_all %>% rename(
-  `2013` = rain_proj_resample_mask_20122013,
-  `2014` = rain_proj_resample_mask_20132014,
-  `2015` = rain_proj_resample_mask_20142015,
-  `2016` = rain_proj_resample_mask_20152016,
-  `2017` = rain_proj_resample_mask_20162017,
-  `2018` = rain_proj_resample_mask_20172018,
-  `2019` = rain_proj_resample_mask_20182019,
-  `2020` = rain20192020cor.csv_B_Ad,
-  `2021` = rain_proj_resample_mask_20202021
-)
-
-
 #convert the pts to a dataframe BUT i want more decimal places!!
 grid_pts_df <- as.data.frame(grid_pts)
 
-# test <- terra::geom(grid_pts, wkt=TRUE) # this is not quite what I want
-# head(test)
 
-rain_all_coords_sub_regions <- cbind(rain_all,grid_pts_df)
-str(rain_all_coords_sub_regions)
-rain_all_coords_sub_regions <- rain_all_coords_sub_regions %>% 
-  dplyr::select(ID, X, Y ,Region_Nam,OBJECTID, `2013`, `2014`: `2021` )
 
-### make dataset narrow
-rain_all_coords_sub_regions_narrow <- rain_all_coords_sub_regions %>% 
-  pivot_longer(
-    `2013`:`2021`, 
-  names_to = "year", 
-  values_to = "mean_rainfall")
+
+
+
+## list in the climate data
+climate_files <- list.files("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/",
+           pattern = "rain")
+#View(climate_files)
+
+climate_files <- as.data.frame(climate_files)
+
+climate_tiff <- climate_files %>% 
+  dplyr::filter(str_detect(climate_files,".tiff")) %>% 
+  dplyr::filter(str_detect(climate_files,"aux.xml", negate = TRUE))
+
+climate_tiff$climate_files <- as.character(climate_tiff$climate_files)
+#Turn into a list
+
+file_list <- climate_tiff[["climate_files"]] 
+#file_list <- "rain_proj_resample_mask_20122013.tiff"
+
+
+climate_type <- "rain"
+
+## this will be the loop
+for (file_list in file_list){
+
+  
+## get the year from the file name
+  step1<-sub(".tiff*", "", file_list) # Extract characters before pattern
+  bit_to_extract <- paste0(".*",climate_type,"_proj_resample_mask_" )
+  year2 <-sub(bit_to_extract, "", step1)# Extract characters after pattern
+  year <- str_sub(year2,-4,-1)
+  rm(step1, year2, bit_to_extract)
+
+## bring in the climate raster 
+  climate <- rast(paste0("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/",
+                         file_list)) 
+## extract the points for the cliamte raster
+  climate <- terra::extract(  x = climate,
+                              y = grid_pts,
+                              xy=TRUE)
+  
+colnames(climate) <- c("ID",climate_type,"x", "y" ) 
+climate <- climate %>% dplyr::mutate(year = year,
+                                     for_join = paste0(x, "_", y))
+grid_pts_df <- grid_pts_df %>% dplyr::mutate(for_join = paste0(X, "_", Y))
+
+
+climate <- left_join(climate, grid_pts_df)
+  
+name <- paste0(climate_type,"_", year)
+assign(name,climate)  
+rm(climate, name,year)
+  
+} 
+
+climate_all <- rbind(
+  rain_2013,
+  rain_2014,
+  rain_2015,
+  rain_2016,
+  rain_2017,
+  rain_2018,
+  rain_2019,
+  rain_2020,
+  rain_2021
+  )
+
+
+rm(rain_2013,
+   rain_2014,
+   rain_2015,
+   rain_2016,
+   rain_2017,
+   rain_2018,
+   rain_2019,
+   rain_2020,
+   rain_2021)
+
+str(climate_all)
+## tidy up a bit...
+climate_all <- climate_all %>% 
+  dplyr::select(-x, -y)
+
+### make dataset wider
+climate_all_wider <- climate_all %>% 
+  pivot_wider(
+    names_from = year,
+    values_from = rain)
+
+### append the climate wider data to the subregions
 
 #change year to double to get geom_smooth to work
-rain_all_coords_sub_regions_narrow <- mutate(rain_all_coords_sub_regions_narrow, year_as_double = as.double(year))
+str(climate_all)
+climate_all <- mutate(climate_all, year_as_double = as.double(year))
 
-str(rain_all_coords_sub_regions_narrow)
-unique(rain_all_coords_sub_regions_narrow$Region_Nam)
+
+unique(climate_all$Region_Nam)
 
 ## modify the regions
-rain_all_coords_sub_regions_narrow <- rain_all_coords_sub_regions_narrow %>% 
+climate_all <- climate_all %>% 
   mutate(merged_regions = case_when(
     Region_Nam == "Wairau Plain (East of Narrows)" ~ "Wairau Valley and Plain",
     Region_Nam == "Wairau Valley (West of Narrows)" ~ "Wairau Valley and Plain",
@@ -120,9 +135,9 @@ rain_all_coords_sub_regions_narrow <- rain_all_coords_sub_regions_narrow %>%
 
 
 #plots the results by year:
-rain_all_coords_sub_regions_narrow %>% 
+climate_all %>% 
   filter(merged_regions != "Not defined") %>% 
-ggplot(aes(factor(year_as_double), mean_rainfall, colour= merged_regions))+
+ggplot(aes(factor(year_as_double), rain, colour= merged_regions))+
   geom_boxplot()+
   facet_wrap(.~merged_regions)+
   theme_classic()+
@@ -135,9 +150,9 @@ ggplot(aes(factor(year_as_double), mean_rainfall, colour= merged_regions))+
 #caption = "Values for each pixel is extracted point by point. 
 #")
 
-rain_all_coords_sub_regions_narrow %>% 
+climate_all %>% 
   filter(merged_regions != "Not defined") %>% 
-  ggplot(aes(merged_regions, mean_rainfall, colour= merged_regions))+
+  ggplot(aes(merged_regions, rain, colour= merged_regions))+
   geom_boxplot()+
   facet_wrap(.~ factor(year_as_double))+
   theme_classic()+
@@ -151,9 +166,9 @@ rain_all_coords_sub_regions_narrow %>%
 #")
 
 
-rain_all_coords_sub_regions_narrow %>% 
+climate_all %>% 
   filter(merged_regions != "Not defined") %>% 
-  ggplot(aes( mean_rainfall))+
+  ggplot(aes( rain))+
   geom_histogram()+
   facet_wrap(.~merged_regions)+
   theme_classic()+
@@ -166,9 +181,9 @@ rain_all_coords_sub_regions_narrow %>%
 #caption = "Values for each pixel is extracted point by point. 
 #")
 
-rain_all_coords_sub_regions_narrow %>% 
+climate_all %>% 
   #filter(merged_regions != "Not defined") %>% 
-  ggplot(aes( mean_rainfall))+
+  ggplot(aes( rain))+
   geom_histogram()+
   facet_wrap(.~factor(year_as_double))+
   theme_classic()+
