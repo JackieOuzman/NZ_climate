@@ -15,9 +15,9 @@ library(tidyverse)
 
 ###############################################################################################
 ###  Bring in the points for every cell in raster with also with the subregions attached
-
-
-grid_pts <- terra::vect("V:/Marlborough regional/Boundary_files/temp/Grid_pts_sub_regions.shp")
+getwd()
+grid_pts <- terra::vect("V:/Viticulture/Marlborough regional/Boundary_files/temp/Grid_pts_sub_regions.shp")
+#grid_pts <- terra::vect("V:/Marlborough regional/Boundary_files/temp/Grid_pts_sub_regions.shp")
 plot(grid_pts)
 #convert the pts to a dataframe BUT i want more decimal places!!
 grid_pts_df <- as.data.frame(grid_pts)
@@ -28,9 +28,9 @@ grid_pts_df <- as.data.frame(grid_pts)
 
 
 ## list in the climate data
-climate_files <- list.files("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/",
+climate_files <- list.files("V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/",
            pattern = "rain")
-#View(climate_files)
+View(climate_files)
 
 climate_files <- as.data.frame(climate_files)
 
@@ -43,7 +43,7 @@ climate_tiff$climate_files <- as.character(climate_tiff$climate_files)
 
 file_list <- climate_tiff[["climate_files"]] 
 #file_list <- "rain_proj_resample_mask_20122013.tiff"
-
+file_list
 
 climate_type <- "rain"
 
@@ -59,7 +59,7 @@ for (file_list in file_list){
   rm(step1, year2, bit_to_extract)
 
 ## bring in the climate raster 
-  climate <- rast(paste0("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/",
+  climate <- rast(paste0("V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/",
                          file_list)) 
 ## extract the points for the cliamte raster
   climate <- terra::extract(  x = climate,
@@ -262,12 +262,53 @@ ggplot(sil_df, aes(x = k, y = sil_width)) +
   geom_line() +
   scale_x_continuous(breaks = 1:5)
 
-## This will tell me how may clusters are best 
-## Then run this K.cluster and plot
+## This will tell me how may clusters are best 2 are the best width of 0.515
+
+# k sil_width
+# 1 2 0.5152743
+# 2 3 0.3915916
+# 3 4 0.3661960
+# 4 5 0.3278771
+
+
+
 
 ## check how many clusters
-kmean_2$cluster
+#kmean_2$cluster
 # Cluster means
 kmean_2$centers
-# Cluster size
-kmean_2$size
+kmean_2$centers
+# 2013     2014     2015     2016     2017     2018     2019     2020     2021
+# 1 792.3224 714.9989 445.7939 402.9304 782.8473 795.5940 498.3793 481.5849 540.9139
+# 2 608.7802 561.2666 360.0539 321.2457 587.6410 665.4163 383.6373 352.7407 444.7624
+
+#Is this the same as rainfall mean of cluster?
+str(climate_all_wider)
+
+Kmean_2Clust_mean <- climate_all_wider %>% 
+  group_by(K_Cluster_2) %>% 
+  summarise_at(vars(`2013`:`2021`),mean, na.rm = TRUE)
+
+Kmean_2Clust_SD<- climate_all_wider %>% 
+  group_by(K_Cluster_2) %>% 
+  summarise_at(vars(`2013`:`2021`),sd, na.rm = TRUE)
+
+Kmean_2Clust_all<- climate_all_wider %>% 
+  group_by(K_Cluster_2) %>% 
+  summarise_all(funs(n(),mean,median))
+
+Kmean_2Clust_all
+
+Kmean_2Clust_xx<- climate_all_wider %>% 
+  group_by(K_Cluster_2) %>% 
+  summarise(count = n())
+
+Kmean_2Clust_xx
+
+library(help="stats")
+
+##could use this but split the data into two cluster
+climate_all_wider %>% summarise(across(c(`2013`:`2021`),  ~ summary(.x, na.rm = TRUE)))
+
+
+                                
