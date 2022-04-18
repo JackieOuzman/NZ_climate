@@ -133,6 +133,15 @@ climate_all <- climate_all %>%
     Region_Nam == "" ~ "Not defined"
   ))
 
+#######################################################################################################################################
+#######################################      save the outputs       ################################################################### 
+#######################################################################################################################################
+
+write.csv(climate_all,"V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/GS_rainfall_climate_all.csv",
+row.names = FALSE)
+write.csv(climate_all_wider,"V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/GS_rainfall_climate_all_cluster_input.csv",
+          row.names = FALSE) 
+
 
 #plots the results by year:
 climate_all %>% 
@@ -256,6 +265,19 @@ sil_df <- data.frame(
   sil_width = sil_width)
 
 sil_df
+elbow_df
+how_many_k <- left_join(elbow_df, sil_df)
+how_many_k
+
+write.csv(how_many_k,"V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/GS_rainfall_how_many_k.csv",
+          row.names = FALSE) 
+
+
+write.csv(climate_all_wider,"V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/GS_rainfall_kmean_2.csv",
+          row.names = FALSE) 
+
+
+
 
 # Plot the silhouette width Note higher sil width indicated better fit of model
 ggplot(sil_df, aes(x = k, y = sil_width)) +
@@ -287,28 +309,29 @@ str(climate_all_wider)
 
 Kmean_2Clust_mean <- climate_all_wider %>% 
   group_by(K_Cluster_2) %>% 
-  summarise_at(vars(`2013`:`2021`),mean, na.rm = TRUE)
+  summarise_at(vars(`2013`:`2021`),mean, na.rm = TRUE) %>% 
+  dplyr::mutate(stats = "mean" )
 
 Kmean_2Clust_SD<- climate_all_wider %>% 
   group_by(K_Cluster_2) %>% 
-  summarise_at(vars(`2013`:`2021`),sd, na.rm = TRUE)
+  summarise_at(vars(`2013`:`2021`),sd, na.rm = TRUE)%>% 
+  dplyr::mutate(stats = "SD" )
 
-Kmean_2Clust_all<- climate_all_wider %>% 
-  group_by(K_Cluster_2) %>% 
-  summarise_all(funs(n(),mean,median))
+Kmean_2Clust_mean
+Kmean_2Clust_SD
+Kmean_2Clust_stats <- rbind(Kmean_2Clust_mean, Kmean_2Clust_SD)
+Kmean_2Clust_stats
 
-Kmean_2Clust_all
-
-Kmean_2Clust_xx<- climate_all_wider %>% 
+Kmean_2Clust_count<- climate_all_wider %>% 
   group_by(K_Cluster_2) %>% 
   summarise(count = n())
 
-Kmean_2Clust_xx
+Kmean_2Clust_stats <- left_join(Kmean_2Clust_stats,Kmean_2Clust_count)
+Kmean_2Clust_stats
 
-library(help="stats")
 
-##could use this but split the data into two cluster
-climate_all_wider %>% summarise(across(c(`2013`:`2021`),  ~ summary(.x, na.rm = TRUE)))
+write.csv(Kmean_2Clust_stats,"V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/GS_rainfall_Kmean_2Clust_stats.csv",
+          row.names = FALSE) 
 
 
                                 
