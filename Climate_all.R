@@ -109,15 +109,173 @@ climate_all <- left_join(climate_all, GST)
 climate_all <- left_join(climate_all, rain)
 
 names(climate_all)
+climate_details <- climate_all %>% 
+  dplyr::select("for_join", "ID":"Region_Nam")
+
 climate_matrix <- climate_all %>% 
   dplyr::select("DOV_2013":"GST_2021", "rain_2013":"rain_2021")
 
-base::scale(climate_all)
+climate_matrix_scale <- base::scale(climate_matrix)
+#summary(climate_matrix_scale)
+
+climate_matrix_scale_with_details <- cbind(climate_details, climate_matrix_scale)
+names(climate_matrix_scale_with_details)
 
 write.csv(
-  climate_all,
+  climate_matrix_scale_with_details,
   paste0(
     "V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/",
     "climate_all_year.csv"),
       row.names = FALSE
 )
+
+
+#############################################################################################################################################
+#### Clusering using R data has no transformations - not sure if it needs to?
+library(cluster)
+
+####################################################################################
+####    INPUT DATA    ##############################################################
+
+##make a dataset we can work with this is scaled
+str(climate_matrix)
+
+
+
+####################################################################################
+####    HOW MANY CLUSTERS    #######################################################
+
+## elbow plot
+library(purrr)
+
+# Use map_dbl to run many models with varying value of k (centers)
+tot_withinss <- map_dbl(1:10,  function(k){
+  model <- kmeans(x = climate_matrix, centers = k)
+  model$tot.withinss
+})
+
+# Generate a data frame containing both k and tot_withinss
+elbow_df <- data.frame(
+  k = 1:10 ,
+  tot_withinss = tot_withinss
+)
+
+
+
+###  silhouette width taking ages - it does!
+
+
+sil_width <- map_dbl(2:5,function(k){
+  model <- cluster::pam(x = climate_matrix, k = k)  
+  model$silinfo$avg.width})
+
+sil_df <- data.frame(
+  k =2:5,  
+  sil_width = sil_width)
+
+
+
+# Plot the elbow plot
+ggplot(elbow_df, aes(x = k, y = tot_withinss)) +
+  geom_line() +
+  scale_x_continuous(breaks = 1:10)
+
+# Plot the silhouette width Note higher sil width indicated better fit of model
+ggplot(sil_df, aes(x = k, y = sil_width)) +
+  geom_line() +
+  scale_x_continuous(breaks = 1:5)
+
+
+
+
+####################################################################################
+####    HOW MANY CLUSTERS SAVE OUTPUT   #############################################
+
+how_many_k <- left_join(elbow_df, sil_df)
+how_many_k
+
+write.csv(how_many_k,
+          paste0(
+            "V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/",
+            "all_climate.csv"),
+              row.names = FALSE) 
+
+
+### Run solution from above analysis
+
+## best number of clusters are:
+k_mean_number <- 2
+
+
+kmean_model <- kmeans(climate_matrix, centers = k_mean_number)
+
+climate_all <- climate_all %>% 
+  dplyr::mutate(k_cluster  = kmean_model$cluster)
+
+names(climate_all)
+
+### Plot and check to solution looks good
+
+
+
+climate_all %>% 
+  ggplot(aes(x = X , y = Y, colour = factor(k_cluster)))+
+  geom_point()+
+  theme_bw()+
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        legend.position = "none"
+        #legend.title = element_blank()
+  )
+
+
+write.csv(climate_all,
+          paste0(
+            "V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/",
+            "Climate_all_kmean.csv"),
+          row.names = FALSE) 
+
+
+
+## stats on the cluster solution
+
+
+
+str(climate_all)
+
+Kmean_2Clust_mean <- climate_all %>% 
+  group_by(k_cluster) %>% 
+  summarise_at(vars(DOV_2013:GST_2021, rain_2013:rain_2021),mean, na.rm = TRUE) %>% 
+  dplyr::mutate(stats = "mean" )
+
+Kmean_2Clust_SD<- climate_all %>% 
+  group_by(k_cluster) %>% 
+  summarise_at(vars(DOV_2013:GST_2021, rain_2013:rain_2021),sd, na.rm = TRUE)%>% 
+  dplyr::mutate(stats = "SD" )
+
+Kmean_2Clust_mean
+Kmean_2Clust_SD
+Kmean_2Clust_stats <- rbind(Kmean_2Clust_mean, Kmean_2Clust_SD)
+Kmean_2Clust_stats
+
+Kmean_2Clust_count<- climate_all %>% 
+  group_by(k_cluster) %>% 
+  summarise(count = n())
+
+Kmean_2Clust_stats <- left_join(Kmean_2Clust_stats,Kmean_2Clust_count)
+Kmean_2Clust_stats
+
+
+write.csv(Kmean_2Clust_stats,
+          paste0(
+            "V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/",
+            "Climate_all_kmean_stats.csv"),
+          row.names = FALSE) 
+
+
+
+
