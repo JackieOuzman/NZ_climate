@@ -197,7 +197,7 @@ how_many_k
 write.csv(how_many_k,
           paste0(
             "V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/",
-            "all_climate.csv"),
+            "all_climate_how_many_clusters.csv"),
               row.names = FALSE) 
 
 
@@ -277,5 +277,36 @@ write.csv(Kmean_2Clust_stats,
           row.names = FALSE) 
 
 
+#################################################################################################################
 
 
+
+number_clusters <- read.csv("V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/all_climate_how_many_clusters.csv")
+
+names(number_clusters)
+
+number_clusters %>% 
+  ggplot(aes(k, tot_withinss))+
+  geom_line(size=3)+
+  scale_x_continuous(breaks = 1:10)+
+  theme_bw()+
+  theme(plot.title = element_text(size=20,face="bold"),
+        axis.text=element_text(size=18),
+        axis.title=element_text(size=20,face="bold"))+
+  labs(x = "number of clusters",
+       y = "sum of squared errors (SSE)",
+       title = "Elbow Curve Method")
+
+number_clusters %>% 
+  filter(k < 6) %>% 
+  filter(k > 1) %>% 
+  ggplot(aes(k, sil_width))+
+  geom_line(size=3)+
+  scale_x_continuous(breaks = 2:5)+
+  theme_bw()+
+  theme(plot.title = element_text(size=20,face="bold"),
+        axis.text=element_text(size=18),
+        axis.title=element_text(size=20,face="bold"))+
+  labs(x = "number of clusters",
+       y = "silhouette coefﬁcient",
+       title = "Silhouette analysis")
