@@ -30,7 +30,7 @@ grid_pts_df <- as.data.frame(grid_pts)
 ## list in the climate data
 list.files("V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/")
 
-climate_type <- "DOV"    #"rain""GST""GDD" "DOH"DOF"
+climate_type <-"rain"     #"rain""GST""GDD" "DOH"DOF""DOV"
 
 climate_files <- list.files("V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/",
            pattern = climate_type)
@@ -56,8 +56,8 @@ for (file_list in file_list){
 
   
 ## get the year from the file name
-  step1<-sub(".tiff*", "", file_list) # Extract characters before pattern # for the rainfall files AND doh
-  #step1<-sub("cor.csv_B_gissmall_Ad.tif.tiff*", "", file_list) # Extract characters before pattern  # for the GST AND gdd files
+  #step1<-sub(".tiff*", "", file_list) # Extract characters before pattern # for the rainfall files AND doh
+  step1<-sub("cor.csv_B_gissmall_Ad.tif.tiff*", "", file_list) # Extract characters before pattern  # for the GST AND gdd files
   bit_to_extract <- paste0(".*",climate_type,"_proj_resample_mask_" )
   year2 <-sub(bit_to_extract, "", step1)# Extract characters after pattern
   year <- str_sub(year2,-4,-1)
@@ -181,8 +181,9 @@ climate_type
 
 
 #https://rpubs.com/odenipinedo/cluster-analysis-in-R
-
-
+climate_all_wider <- read.csv("V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/GS_rainfall_climate_all_cluster_input.csv")
+  
+ 
 
 #### Clusering using R data has no transformations - not sure if it needs to?
 library(cluster)
@@ -193,9 +194,12 @@ library(cluster)
 ##make a dataset we can work with
 str(climate_all_wider)
 cluser_input <- climate_all_wider %>% 
-  select(`2013`:`2021`  )
+  dplyr::select("X2013":"X2021")
 
 
+#scale data
+
+cluser_input_scale <- scale(cluser_input)
 ####################################################################################
 ####    HOW MANY CLUSTERS    #######################################################
 
@@ -204,7 +208,7 @@ library(purrr)
 
 # Use map_dbl to run many models with varying value of k (centers)
 tot_withinss <- map_dbl(1:10,  function(k){
-  model <- kmeans(x = cluser_input, centers = k)
+  model <- kmeans(x = cluser_input_scale, centers = k)
   model$tot.withinss
 })
 
@@ -219,12 +223,12 @@ elbow_df <- data.frame(
 ###  silhouette width taking ages - it does!
 
 
-sil_width <- map_dbl(2:5,function(k){
-  model <- cluster::pam(x = cluser_input, k = k)  
+sil_width <- map_dbl(2:10,function(k){
+  model <- cluster::pam(x = cluser_input_scale, k = k)  
   model$silinfo$avg.width})
 
 sil_df <- data.frame(
-  k =2:5,  
+  k =2:10,  
   sil_width = sil_width)
 
 
@@ -251,7 +255,8 @@ how_many_k
 write.csv(how_many_k,
           paste0(
           "V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/",
-          climate_type,
+          "rainfall_scaled",
+          #climate_type,
           "_how_many_k.csv"),
           row.names = FALSE) 
 

@@ -30,7 +30,7 @@ grid_pts_df <- as.data.frame(grid_pts)
 ## list in the climate data
 climate_files <- list.files("V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/",
            pattern = "rain")
-View(climate_files)
+#View(climate_files)
 
 climate_files <- as.data.frame(climate_files)
 
