@@ -85,9 +85,11 @@ climate %>%
              color = "sky blue", size=0.8)
 
 
-number_clusters <- read.csv("V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/GS_rainfall_how_many_k.csv")
+#number_clusters <- read.csv("V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/GS_rainfall_how_many_k.csv")
+number_clusters <- read.csv("V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/rainfall_scaled_how_many_k.csv")
+number_clusters_Jmp <- read.csv("V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/climate_cluster_JMP_report_rain_only.csv")
 
-names(number_clusters)
+names(number_clusters_Jmp)
 
 number_clusters %>% 
   ggplot(aes(k, tot_withinss))+
@@ -102,11 +104,11 @@ number_clusters %>%
        title = "Elbow Curve Method")
 
 number_clusters %>% 
-  filter(k < 6) %>% 
+  filter(k < 11) %>% 
   filter(k > 1) %>% 
   ggplot(aes(k, sil_width))+
   geom_line(size=3)+
-  scale_x_continuous(breaks = 2:5)+
+  scale_x_continuous(breaks = 2:10)+
   theme_bw()+
   theme(plot.title = element_text(size=20,face="bold"),
         axis.text=element_text(size=18),
@@ -114,7 +116,20 @@ number_clusters %>%
     labs(x = "number of clusters",
          y = "silhouette coefﬁcient",
          title = "Silhouette analysis")
-  
+ 
+
+number_clusters_Jmp %>% 
+  ggplot(aes(NCluster, CCC))+
+  geom_line(size=3)+
+  scale_x_continuous(breaks = 1:10)+
+  theme_bw()+
+  theme(plot.title = element_text(size=20,face="bold"),
+        axis.text=element_text(size=18),
+        axis.title=element_text(size=20,face="bold"))+
+  labs(x = "number of clusters",
+       y = "Cubic Cluster Criterion",
+       title = "CCC method")
+
 str(climate)
 
 

@@ -197,9 +197,11 @@ cluser_input <- climate_all_wider %>%
   dplyr::select("X2013":"X2021")
 
 
-#scale data
+####################################################################################
+####    Scale DATA    ##############################################################
 
 cluser_input_scale <- scale(cluser_input)
+
 ####################################################################################
 ####    HOW MANY CLUSTERS    #######################################################
 
@@ -264,10 +266,10 @@ write.csv(how_many_k,
 ### Run solution from above analysis
 
 ## best number of clusters are:
-k_mean_number <- 2
+k_mean_number <- 7
 
 
-kmean_model <- kmeans(cluser_input, centers = k_mean_number)
+kmean_model <- kmeans(cluser_input_scale, centers = k_mean_number)
 
 climate_all_wider <- climate_all_wider %>% 
   dplyr::mutate(k_cluster  = kmean_model$cluster)
