@@ -266,3 +266,57 @@ write.csv(Kmean_7Clust_stats,
             "Rain7Cluster",
             "_kmean_stats.csv"),
           row.names = FALSE) 
+
+
+
+#############################################################################################################
+#Just the GDD cluster solutions
+
+## how many clusters?
+
+CCC_GDD_df <- read.csv("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/climate_cluster_JMP_report_GDD_only.csv")
+str(CCC_GDD_df)                  
+
+CCC_GDD_df %>% 
+  ggplot(aes(NCluster, CCC))+
+  geom_line(size=3)+
+  scale_x_continuous(breaks = 1:10)+
+  theme_bw()+
+  theme(plot.title = element_text(size=20,face="bold"),
+        axis.text=element_text(size=18),
+        axis.title=element_text(size=20,face="bold"))+
+  labs(x = "number of clusters",
+       y = "Cubic Cluster Criterion",
+       title = "CCC method")
+
+
+names(climate_cluster_rain_only)
+
+
+climate_cluster_GDD_only_narrow <-climate_cluster_GDD_only %>% 
+  pivot_longer(
+    cols= c(Rain7Cluster:Rain6Cluster),
+    names_to = "cluster_solution",
+    values_to = "cluster"
+  )
+head(climate_cluster_GDD_only_narrow)
+
+
+climate_cluster_GDD_only_narrow %>% 
+  filter(cluster_solution == "GDD7Cluster") %>% 
+  ggplot(aes(x = X , y = Y, colour = factor(cluster)))+
+  geom_point()+
+  #facet_wrap(.~ cluster_solution)+
+  theme_bw()+
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        legend.position = "bottom"
+        #legend.title = element_blank()
+  )
+
+## stats on the rain cluster solution 7
+
