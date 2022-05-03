@@ -47,4 +47,9 @@ climate_grid_values_wide %>%
   ggplot(aes(DOF, DOH))+
   geom_point()+
   facet_wrap(.~ year)
+
+climate_grid_values_wide %>% 
+  ggplot(aes(DOV, DOH))+
+  geom_point()+
+  facet_wrap(.~ year)
   
