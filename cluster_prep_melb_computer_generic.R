@@ -16,9 +16,11 @@ library(tidyverse)
 ###############################################################################################
 ###  Bring in the points for every cell in raster with also with the subregions attached
 
-grid_pts <- terra::vect("V:/Viticulture/Marlborough regional/Boundary_files/temp/Grid_pts_sub_regions.shp") #melb computer
-#grid_pts <- terra::vect("V:/Marlborough regional/Boundary_files/temp/Grid_pts_sub_regions.shp") #my computer
+#grid_pts <- terra::vect("V:/Viticulture/Marlborough regional/Boundary_files/temp/Grid_pts_sub_regions.shp") #melb computer
+grid_pts <- terra::vect("V:/Marlborough regional/Boundary_files/temp/Grid_pts_sub_regions.shp") #my computer
 plot(grid_pts)
+grid_pts
+
 #convert the pts to a dataframe BUT i want more decimal places!!
 grid_pts_df <- as.data.frame(grid_pts)
 
