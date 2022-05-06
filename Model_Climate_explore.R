@@ -99,7 +99,7 @@ climate_grid_values_wide %>%
 
 
 ###########################################################################################
-### extract the vineyard data vs modelled data.
+### extract the raw vineyard data vs modelled data.
 
 #load a study vineyards with captured data 
 study_vineyards <- vect("V:/Marlborough regional/climate/modelled_climate_vs_vineyard/for_mapping_Aug2021_edit.shp")
@@ -110,8 +110,21 @@ study_vineyardss_df <- study_vineyardss_df %>%
   rename(x = x_coord,
          y = y_coord)
 
+### not all sites have harvest date data
+study_vineyards_DOH <- terra::subset(study_vineyards, study_vineyards$julian > "0")
+study_vineyards_DOH_df <- as.data.frame(study_vineyards_DOH)
 
+study_vineyards_DOH_df <- study_vineyards_DOH_df %>% 
+  rename(x = x_coord,
+         y = y_coord)
+
+dim(study_vineyards_DOH) 
+dim(study_vineyards) 
+
+study_vineyards_DOH
 plot(study_vineyards)
+
+
 names(study_vineyards)
 
 # load the modlled climate data as tif
@@ -138,7 +151,7 @@ climate_tiff$climate_files <- as.character(climate_tiff$climate_files)
 file_list <- climate_tiff[["climate_files"]] 
 
 #file_list
-#file_list <- file_list[1]
+file_list <- file_list[1]#2013
 #file_list <- file_list[2]
 #file_list <- file_list[3]
 #file_list <- file_list[4] #16
@@ -168,70 +181,64 @@ file_list
                          file_list)) 
   ## extract the points for the cliamte raster
   climate <- terra::extract(  x = climate,
-                              y = study_vineyards,
+                              y = study_vineyards_DOH,
                               xy=TRUE)
   #names(climate)
-  names(study_vineyardss_df)
+  names(study_vineyards_DOH_df)
   #colnames(study_vineyardss_df) <- c("ID",climate_type,"x", "y" ) 
   
   climate <- climate %>% dplyr::mutate(year = year,
                                        for_join = paste0(x, "_", y))
-  study_vineyardss_df <- study_vineyardss_df %>% dplyr::mutate(for_join = paste0(x, "_", y))
+  study_vineyards_DOH_df <- study_vineyards_DOH_df %>% dplyr::mutate(for_join = paste0(x, "_", y))
   
   str(climate)
-  str(study_vineyardss_df)
-  study_vineyardss_df <- study_vineyardss_df %>% 
+  str(study_vineyards_DOH_df)
+  study_vineyards_DOH_df <- study_vineyards_DOH_df %>% 
     dplyr::rename(year_vineyard_data = year) %>% 
     dplyr::select(-x, - y)
   
-  climate <- left_join(climate, study_vineyardss_df, by = "for_join")
+  climate <- left_join(climate, study_vineyards_DOH_df, by = "for_join")
   
   name <- paste0(climate_type,"_", year)
   assign(name,climate)  
   rm(climate, name,year)
   
 #} 
+
+#Tidy up what I have for each year
 str(DOH_2013)
-str(DOH_2021) 
 DOH_2013 <- DOH_2013 %>% 
   rename( DOH = Dateof200g20122013cor_SB_1.csv_B_gissmall_Ad)
-DOH_2014 <- DOH_2014 %>% 
-  rename( DOH = DOH_proj_resample_mask_20132014)
 
-DOH_2015 <- DOH_2015 %>% 
-  rename( DOH = DOH_proj_resample_mask_20142015)
-DOH_2016 <- DOH_2016 %>% 
-  rename( DOH = DOH_proj_resample_mask_20152016)
-DOH_2017 <- DOH_2017 %>% 
-  rename( DOH = DOH_proj_resample_mask_20162017)
-DOH_2018 <- DOH_2018 %>% 
-  rename( DOH = DOH_proj_resample_mask_20172018)
-DOH_2019 <- DOH_2019 %>% 
-  rename( DOH = DOH_proj_resample_mask_20182019)
-DOH_2020 <- DOH_2020 %>% 
-  rename( DOH = DOH_proj_resample_mask_20192020)
-DOH_2021 <- DOH_2021 %>% 
-  rename( DOH = DOH_proj_resample_mask_20202021)
+DOH_2013 <- DOH_2013 %>% 
+  dplyr::filter(DOH > 0)
+DOH_2013 <- DOH_2013 %>% 
+  dplyr::filter(julian > 0)
+DOH_2013 <- DOH_2013 %>% 
+  dplyr::filter(year_vineyard_data == 2013)
+DOH_2013 <- DOH_2013 %>% 
+  dplyr::select(ID, x,y, year, DOH, julian )
+str(DOH_2013)
+DOH_2013$julian <- as.double(DOH_2013$julian)
 
-  climate_all <- rbind(
-    DOH_2013,
-    DOH_2014,
-    DOH_2015,
-    DOH_2016 ,
-    DOH_2017,
-    DOH_2018,
-    DOH_2019,
-    DOH_2020,
-    DOH_2021
-  )
 
-  
-  write.csv(
-    climate_all,
-    paste0(
-      "V:/Marlborough regional/climate/modelled_climate_vs_vineyard/",
-      "DOH_modelled_vs_vineyard",
-      ".csv"),
-    row.names = FALSE
-  )
+DOH_2013 %>%  
+  ggplot( mapping = aes(julian, DOH)) +
+  geom_point() +
+  geom_smooth(method = lm, se = FALSE, na.rm = TRUE) +
+  stat_regline_equation(
+    #aes(label =  paste(..eq.label.., ..rr.label.., sep = "~~~~")),
+    aes(label =  paste( ..rr.label..)),
+    formula = (y ~ x)
+  ) +
+  theme_bw()+
+  theme(legend.position = "none")+
+  labs(title = "Modelled climate data vs collected data",
+       x = "Observed Day of harvest", y = "Modlled day of harvest")+
+  facet_wrap(.~ year)
+
+
+
+###########################################################################################
+### extract the kriged vineyard data vs modelled data.
   
