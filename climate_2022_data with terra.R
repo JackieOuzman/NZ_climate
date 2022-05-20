@@ -1,5 +1,5 @@
 
-install.packages("terra")
+#install.packages("terra")
 
 
 
@@ -96,7 +96,7 @@ rm(step1)
 #This should work
 climate_raster
 climate_raster_projected <- terra::project(x = climate_raster, 
-                       y="epsg:2193", 
+                       y="epsg:2193"), 
                        align= study_vineyards)
 
 # change the resolution
