@@ -24,19 +24,43 @@ grid_pts
 grid_pts_df <- as.data.frame(grid_pts)
 
 
-## bring in the climate raster
-Julain_2014 <- rast(paste0("V:/Marlborough regional/working_jaxs/for_mapping_may2022/vesper_Julian_days/Julian2014/Vesper/",
-                           "julian_days_HighDensity_Julian_201_PRED_100m.tif")) 
-Julain_2015 <- rast(paste0("V:/Marlborough regional/working_jaxs/for_mapping_may2022/vesper_Julian_days/Julian2015/Vesper/",
-                           "julian_days_HighDensity_Julian_201_PRED_100m.tif")) 
-Julain_2016 <- rast(paste0("V:/Marlborough regional/working_jaxs/for_mapping_may2022/vesper_Julian_days/Julian2016/Vesper/",
-                           "julian_days_2016_HighDensity_Julian_201_PRED_100m.tif")) 
-Julain_2017 <- rast(paste0("V:/Marlborough regional/working_jaxs/for_mapping_may2022/vesper_Julian_days/Julian2017/Vesper/",
+## bring in the Kriged harvest dates raster
+kriged_data_path <- "V:/Marlborough regional/working_jaxs/for_mapping_may2022"
+Julain_2014 <- rast(paste0(kriged_data_path,
+                           "/vesper_Julian_days/Julian",
+                           "2014",
+                           "/Vesper/",
+                           "julian_days_2014_HighDensity_Julian_201_PRED_100m.tif")) 
+
+Julain_2015 <- rast(paste0(kriged_data_path,
+                           "/vesper_Julian_days/Julian",
+                           "2015",
+                           "/Vesper/",
+                           "julian_days_2015_HighDensity_Julian_201_PRED_100m.tif"))
+
+Julain_2016 <- rast(paste0(kriged_data_path,
+                           "/vesper_Julian_days/Julian",
+                           "2016",
+                           "/Vesper/",
+                           "julian_days_2016_HighDensity_Julian_201_PRED_100m.tif"))
+Julain_2017 <- rast(paste0(kriged_data_path,
+                           "/vesper_Julian_days/Julian",
+                           "2017",
+                           "/Vesper/",
                            "julian_days_2017_HighDensity_Julian_201_PRED_100m.tif"))
-Julain_2018 <- rast(paste0("V:/Marlborough regional/working_jaxs/for_mapping_may2022/vesper_Julian_days/Julian2018/Vesper/",
+
+Julain_2018 <- rast(paste0(kriged_data_path,
+                           "/vesper_Julian_days/Julian",
+                           "2018",
+                           "/Vesper/",
                            "julian_days_2018_HighDensity_Julian_201_PRED_100m.tif"))
-Julain_2019 <- rast(paste0("V:/Marlborough regional/working_jaxs/for_mapping_may2022/vesper_Julian_days/Julian2019/Vesper/",
+
+Julain_2019 <- rast(paste0(kriged_data_path,
+                           "/vesper_Julian_days/Julian",
+                           "2019",
+                           "/Vesper/",
                            "julian_days_2019_HighDensity_Julian_201_PRED_100m.tif"))
+
 
 ## extract the points for the cliamte raster
 Julain2014_df <- terra::extract(  x = Julain_2014,
@@ -125,10 +149,15 @@ grid_pts_df <- grid_pts_df %>% dplyr::mutate(for_join = paste0(X, "_", Y))
 Julain_df <- left_join(Julain_df, grid_pts_df)
 
 
-write.csv(Julain_df, "V:/Marlborough regional/working_jaxs/for_mapping_may2022/vesper_Julian_days/Kriged_julian_days_pts_for_climate_match.csv",
+write.csv(Julain_df, "V:/Marlborough regional/working_jaxs/for_mapping_may2022/vesper_Julian_days/Kriged_julian_days_pts_JMPIN.csv",
           row.names = FALSE)
 
-
+rm(list=ls()[ls()!= "Julain_df"])
+names(Julain_df)
+## just check that it ok - it does
+Julain_df %>% 
+ggplot(aes(x= X, y = Y))+ 
+  geom_point()
 #### modelled data
 
 climate_grid_values <- read.csv("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/Climate_all_JMP_IN.csv")
@@ -136,7 +165,10 @@ names(climate_grid_values)
 climate_grid_values_DOH <- climate_grid_values %>% 
 dplyr::select(for_join,DOH_2013:DOH_2020)
 names(climate_grid_values_DOH)
-
+## just check that it ok - it does
+climate_grid_values %>% 
+  ggplot(aes(x= X, y = Y))+ 
+  geom_point()
 
 ### join it to the Julain_df
 
@@ -144,17 +176,15 @@ Julain_df_plus_climate <- left_join(Julain_df, climate_grid_values_DOH)
 
 names(Julain_df_plus_climate)
 ## plot
+## just check that it ok - it does
+Julain_df_plus_climate %>% 
+  ggplot(aes(x= X, y = Y))+ 
+  geom_point()
+
 Julain_df_plus_climate %>%  
   ggplot( mapping = aes(Julain_2014, DOH_2014)) +
   geom_point() +
-  #geom_smooth(method = lm, se = FALSE, na.rm = TRUE) +
-  # stat_regline_equation(
-  #   #aes(label =  paste(..eq.label.., ..rr.label.., sep = "~~~~")),
-  #   aes(label =  paste( ..rr.label..)),
-  #   formula = (y ~ x)
-  # ) +
-  theme_bw()+
+    theme_bw()+
   theme(legend.position = "none")+
   labs(title = "Modelled climate data vs collected data",
-       x = "Observed Day of harvest", y = "Modlled day of harvest")#+
-  #facet_wrap(.~ year)
+       x = "Observed Day of harvest", y = "Modlled day of harvest")
