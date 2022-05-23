@@ -18,7 +18,7 @@ library(purrr)
 #######################################################################################################################################
 
 
-climate_pre_cluster <- read.csv("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/Climate_all_JMP_IN.csv")
+climate_pre_cluster <- read.csv("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/climate_all_cluster_input.csv")
 
 names(climate_pre_cluster)
 #####################################################################################################################
@@ -36,6 +36,10 @@ str(climate_pre_cluster)
 cluser_input_rain <- climate_pre_cluster %>% 
   dplyr::select("rain_2013":"rain_2021", X, Y)
 
+#remove the missing values
+
+cluser_input_rain <- cluser_input_rain %>% 
+  filter(!is.na(rain_2013))
 
 ####################################################################################
 ####    Scale DATA    ##############################################################
@@ -125,7 +129,7 @@ cluser_input_rain %>%
 
 write.csv(cluser_input_rain,
           paste0(
-            "V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/",
+            "V:/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/R_cluster_solution_option/",
             "rain_7Clusters",
             "_kmean.csv"),
           row.names = FALSE) 
@@ -150,7 +154,7 @@ Kmean_7Clust_SD<- cluser_input_rain %>%
 
 Kmean_7Clust_mean
 Kmean_7Clust_SD
-Kmean_7Clust_stats <- rbind(Kmean_2Clust_mean, Kmean_2Clust_SD)
+Kmean_7Clust_stats <- rbind(Kmean_7Clust_mean, Kmean_7Clust_SD)
 Kmean_7Clust_stats
 
 Kmean_7Clust_count<- cluser_input_rain %>% 
@@ -163,7 +167,7 @@ Kmean_7Clust_stats
 
 write.csv(Kmean_7Clust_stats,
           paste0(
-            "V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/",
+            "V:/Marlborough regional/climate/climate_data_2022_vineyards_R/Climate_data_as_pts/R_cluster_solution_option/",
             "rain_7_culster",
             "_kmean_stats.csv"),
           row.names = FALSE) 
