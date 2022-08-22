@@ -17,9 +17,12 @@ library(tidyverse)
 ###  Bring in the points for every cell in raster with also with the subregions attached
 # this was done in Arcmap "V:\Marlborough regional\Council\Regional_Grid\extracting_pts_frm_base_grid.mxd"
 
-grid_pts_df <- read.csv("V:/Marlborough regional/Council/Regional_Grid/Marl_Ag_200_BlockGrid_100m_pts.csv")
+path <- "V:/Viticulture/" #melb computer
 
-grid_pts_vec <- vect( grid_pts_df, geom=c('X','Y'), crs=paste0("epsg:",2193) )
+#grid_pts_df <- read.csv("V:/Marlborough regional/Council/Regional_Grid/Marl_Ag_200_BlockGrid_100m_pts.csv")
+grid_pts_df <- read.csv(paste0(path,"Marlborough regional/Council/Regional_Grid/Marl_Ag_200_BlockGrid_100m_pts.csv"))
+
+grid_pts_vec <- terra::vect( grid_pts_df, geom=c('X','Y'), crs=paste0("epsg:",2193) )
 plot(grid_pts_vec)
 
 
@@ -28,14 +31,15 @@ plot(grid_pts_vec)
 
 
 ## list in the climate data
-#list.files("V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/") #Melb   computer
-list.files("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/") #Jackies computer
+list.files(paste0(path, "Marlborough regional/climate/climate_data_2022_vineyards_R/"))#Melb   computer
+
+#list.files("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/") #Jackies computer
 
 climate_type <-"DOV"     #"rain""GST""GDD" "DOH"DOF""DOV"
 
 # climate_files <- list.files("V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/",
 #            pattern = climate_type)
-climate_files <- list.files("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/",
+climate_files <- list.files("V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/",
                             pattern = climate_type)
 
 #View(climate_files)
@@ -60,8 +64,8 @@ for (file_list in file_list){
 
   
 ## get the year from the file name
-  #step1<-sub(".tiff*", "", file_list) # Extract characters before pattern # for the rainfall files AND doh
-  step1<-sub(".tiff*", "", file_list) # Extract characters before pattern # for GST
+  step1<-sub(".tiff*", "", file_list) # Extract characters before pattern # for the rainfall files AND doh
+  #step1<-sub(".tiff*", "", file_list) # Extract characters before pattern # for GST
   
   
   
