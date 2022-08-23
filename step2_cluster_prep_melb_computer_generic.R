@@ -35,11 +35,11 @@ list.files(paste0(path, "Marlborough regional/climate/climate_data_2022_vineyard
 
 #list.files("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/") #Jackies computer
 
-climate_type <-"DOV"     #"rain""GST""GDD" "DOH"DOF""DOV"
+climate_type <-"DOH"     #"rain""GST""GDD" "DOH"DOF""DOV"
 
 # climate_files <- list.files("V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/",
 #            pattern = climate_type)
-climate_files <- list.files("V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/",
+climate_files <- list.files(paste0(path, "Marlborough regional/climate/climate_data_2022_vineyards_R/"),
                             pattern = climate_type)
 
 #View(climate_files)
@@ -64,22 +64,25 @@ for (file_list in file_list){
 
   
 ## get the year from the file name
-  step1<-sub(".tiff*", "", file_list) # Extract characters before pattern # for the rainfall files AND doh
-  #step1<-sub(".tiff*", "", file_list) # Extract characters before pattern # for GST
+  #step1<-sub(".tiff*", "", file_list) # Extract characters before pattern # for the rainfall files AND doh
+  step1<-sub(".tiff*", "", file_list) # Extract characters before pattern # for GST
   
   
   
   bit_to_extract <- paste0(".*",climate_type,"_proj_resample_mask_" )
   year2 <-sub(bit_to_extract, "", step1)# Extract characters after pattern
-  year <- str_sub(year2,-4,-1)
+  #year <- str_sub(year2,-4,-1)
+  year <- str_sub(year2,4,8) #for DOH
   rm(step1, year2, bit_to_extract)
 
 ## bring in the climate raster 
   # climate <- rast(paste0("V:/Viticulture/Marlborough regional/climate/climate_data_2022_vineyards_R/",
   #                        file_list)) #melb computer
-  climate <- rast(paste0("V:/Marlborough regional/climate/climate_data_2022_vineyards_R/",
+  climate <- rast(paste0(path,"Marlborough regional/climate/climate_data_2022_vineyards_R/",
                          file_list)) #my computer
-## extract the points for the cliamte raster
+
+  
+  ## extract the points for the cliamte raster
   climate <- terra::extract(  x = climate,
                               y = grid_pts_vec,
                               xy=TRUE)
@@ -92,7 +95,7 @@ grid_pts_df <- grid_pts_df %>% dplyr::mutate(for_join = paste0(X, "_", Y))
 
 climate <- left_join(climate, grid_pts_df)
 climate <- climate %>% 
-  select(-Rowid_,
+  dplyr::select(-Rowid_,
          - MARL_AG_200_BLOC,
          - x,
          -y,
@@ -170,27 +173,27 @@ rm(climate, name,year)
 # GDD_2020,
 # GDD_2021)
 
-# climate_all_DOH <- rbind(
-#   DOH_2013,
-#   DOH_2014,
-#   DOH_2015,
-#   DOH_2016,
-#   DOH_2017,
-#   DOH_2018,
-#   DOH_2019,
-#   DOH_2020,
-#   DOH_2021
-# )
-# 
-# rm(DOH_2013,
-#    DOH_2014,
-#    DOH_2015,
-#    DOH_2016,
-#    DOH_2017,
-#    DOH_2018,
-#    DOH_2019,
-#    DOH_2020,
-#    DOH_2021)
+climate_all_DOH <- rbind(
+  DOH_2013,
+  DOH_2014,
+  DOH_2015,
+  DOH_2016,
+  DOH_2017,
+  DOH_2018,
+  DOH_2019,
+  DOH_2020,
+  DOH_2021
+)
+
+rm(DOH_2013,
+   DOH_2014,
+   DOH_2015,
+   DOH_2016,
+   DOH_2017,
+   DOH_2018,
+   DOH_2019,
+   DOH_2020,
+   DOH_2021)
 
 
 # climate_all_DOF <- rbind(
